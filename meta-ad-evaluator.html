@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Ad Evaluator</title>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f5f9;color:#1a1a2e;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#1877f2 0%,#0d5ab8 100%);color:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.hdr-logo{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.hdr-title{font-size:17px;font-weight:700}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px}
+.mas-badge{border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.5px}
+.api-banner{background:#0f172a;color:white;padding:10px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.api-banner-text{font-size:13px;color:#c7d2fe}
+.api-banner-text strong{color:white}
+.api-input-row{display:flex;gap:8px;align-items:center}
+.api-input{padding:7px 12px;border:1.5px solid rgba(255,255,255,.3);border-radius:6px;background:white;color:#1f2937;font-size:13px;width:300px;font-family:inherit}
+.api-input::placeholder{color:#9ca3af}
+.api-input:focus{outline:none;border-color:#1877f2}
+.api-save-btn{padding:7px 14px;background:#1877f2;color:white;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.api-ok{display:flex;align-items:center;gap:8px;font-size:13px;color:#86efac}
+.api-ok-change{font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:underline;margin-left:4px}
+.api-clear-btn{padding:6px 10px;background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.2);border-radius:5px;font-size:11px;cursor:pointer}
+.main{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+.card{background:white;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.07);overflow:hidden;margin-bottom:18px}
+.card-hdr{padding:20px 26px 16px;border-bottom:1px solid #f0f2f8}
+.card-title{font-size:19px;font-weight:700;margin-bottom:3px}
+.card-sub{color:#666;font-size:13px}
+.card-body{padding:22px 26px}
+.fg{margin-bottom:16px}
+.lbl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
+.req{color:#ef4444}
+.opt{background:#f3f4f6;color:#6b7280;font-size:11px;font-weight:500;padding:1px 6px;border-radius:4px}
+select,input[type=url],input[type=text],textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;color:#1f2937;background:#fafafa;transition:border-color .15s}
+select:focus,input:focus,textarea:focus{outline:none;border-color:#1877f2;background:white;box-shadow:0 0 0 3px rgba(24,119,242,.1)}
+textarea{resize:vertical}
+.hint{font-size:12px;color:#9ca3af;margin-top:4px}
+.counter-row{display:flex;justify-content:space-between;margin-top:4px}
+.counter{font-size:11px;color:#9ca3af;font-weight:500}
+.counter.ok{color:#22c55e}.counter.over{color:#f59e0b}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.row2{grid-template-columns:1fr}}
+.format-selector{display:flex;gap:10px;margin-bottom:16px}
+.format-btn{flex:1;padding:14px 12px;border:2px solid #e5e7eb;border-radius:10px;background:white;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:#6b7280;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:5px}
+.format-btn .fmt-icon{font-size:24px}
+.format-btn:hover{border-color:#1877f2;color:#1877f2;background:#f0f6ff}
+.format-btn.active{border-color:#1877f2;background:#e8f1ff;color:#1877f2}
+.fw-rec{margin-top:6px;padding:8px 12px;background:#eef2ff;border-radius:7px;font-size:12px;color:#3730a3;border:1px solid #c7d2fe;display:none}
+.fw-rec strong{color:#1e40af}
+.fw-rec-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:4px}
+.fw-rec-primary{background:#1877f2;color:white}
+.fw-rec-alt{background:#c7d2fe;color:#3730a3}
+.upload-zone{border:2px dashed #d1d5db;border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;position:relative;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.upload-zone:hover,.upload-zone.drag{border-color:#1877f2;background:#f0f6ff}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+.upload-icon{font-size:28px}
+.upload-title{font-size:13px;font-weight:600;color:#374151}
+.upload-sub{font-size:12px;color:#9ca3af}
+.upload-preview{width:100%;border-radius:8px;max-height:220px;object-fit:contain}
+.upload-clear{font-size:11px;color:#ef4444;cursor:pointer;text-decoration:underline;margin-top:6px;display:inline-block;z-index:3;position:relative}
+.frame-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;margin-bottom:4px}
+.frame-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;border:1px solid #e5e7eb}
+.frame-label{font-size:10px;color:#9ca3af;text-align:center;margin-top:2px}
+.frame-wrap{display:flex;flex-direction:column}
+.extracting-bar{background:#f0f6ff;border:1px solid #c7d2fe;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#1877f2;width:100%}
+.ex-spin{width:16px;height:16px;border:2px solid #c7d2fe;border-top-color:#1877f2;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.video-fields{display:none}
+.video-fields.show{display:block}
+.submit-btn{width:100%;padding:12px;background:#1877f2;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:4px}
+.submit-btn:hover{background:#1565d8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(24,119,242,.3)}
+.submit-btn:disabled{background:#9ca3af;cursor:not-allowed;transform:none;box-shadow:none}
+.alert-err{display:flex;gap:10px;padding:12px 14px;border-radius:8px;font-size:13px;margin-top:10px;line-height:1.5;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b}
+#loadingSection{display:none;background:white;border-radius:14px;padding:52px 26px;text-align:center;box-shadow:0 2px 14px rgba(0,0,0,.07);margin-bottom:18px}
+.spinner{width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#1877f2;border-radius:50%;animation:spin .85s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.load-sub{color:#6b7280;font-size:13px;margin-bottom:20px}
+.load-steps{display:flex;flex-direction:column;gap:7px;align-items:center}
+.lstep{font-size:13px;color:#d1d5db;transition:color .4s}
+.lstep.active{color:#1877f2;font-weight:600}
+.lstep.done{color:#22c55e}
+#resultsSection{display:none}
+.format-tag-img{background:#e8f1ff;color:#1877f2}
+.format-tag-vid{background:#fdf4ff;color:#7c3aed}
+.format-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.fw-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.obj-tag{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block}
+.eval-banner{background:white;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.07);padding:22px 26px;margin-bottom:18px}
+.banner-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.score-display{display:flex;align-items:baseline;gap:3px;margin:6px 0}
+.score-big{font-size:56px;font-weight:900;line-height:1}
+.score-den{font-size:18px;color:#9ca3af;font-weight:400}
+.score-pct{font-size:14px;color:#9ca3af;margin-left:4px}
+.score-pass{color:#22c55e}.score-warn{color:#f59e0b}.score-fail{color:#ef4444}
+.rating-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.r-excellent{background:#dcfce7;color:#166634}
+.r-strong{background:#dbeafe;color:#1e40af}
+.r-needs{background:#fef3c7;color:#92400e}
+.r-weak{background:#fee2e2;color:#991b1b}
+.compliance-box{padding:11px 14px;border-radius:9px;font-size:13px;font-weight:500;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px}
+.c-pass{background:#dcfce7;color:#166634;border:1px solid #bbf7d0}
+.c-flag{background:#fff7ed;color:#7c2d12;border:1px solid #fed7aa}
+.c-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.approval-box{padding:11px 14px;border-radius:9px;font-size:13px;border:1px solid #e5e7eb;background:#f9fafb}
+.approval-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:5px}
+.approval-explain{font-size:12px;color:#6b7280;line-height:1.5;margin-top:5px}
+.send-ready{background:#dcfce7;border:2px solid #22c55e;color:#14532d;padding:14px 18px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.send-notready{background:#fff7ed;border:2px solid #f97316;color:#7c2d12;padding:14px 18px;border-radius:10px;font-size:14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.sr-icon{font-size:22px;flex-shrink:0;line-height:1}
+.sr-criteria-list{font-size:12px;font-weight:400;margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.sr-tag{padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.07);font-weight:600}
+.section{margin-bottom:18px}
+.sec-title{font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.fw-adh-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 16px;border-top:3px solid #e5e7eb;text-align:center}
+.fw-adh-card.pass{border-top-color:#22c55e}.fw-adh-card.warn{border-top-color:#f59e0b}.fw-adh-card.fail{border-top-color:#ef4444}
+.fw-adh-stage{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:5px}
+.fw-adh-score{font-size:22px;font-weight:800;line-height:1;margin-bottom:4px}
+.fw-adh-score.pass{color:#22c55e}.fw-adh-score.warn{color:#f59e0b}.fw-adh-score.fail{color:#ef4444}
+.fw-adh-note{font-size:12px;color:#6b7280;line-height:1.4}
+.fw-adh-summary{background:#f8faff;border:1px solid #e0e7ff;border-radius:9px;padding:12px 16px;margin-top:10px;font-size:13px;color:#374151;line-height:1.6}
+.fw-adh-summary strong{color:#1877f2}
+.priority-list{display:flex;flex-direction:column;gap:10px}
+.priority-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 16px;display:flex;gap:13px;align-items:flex-start;border-left:4px solid #ef4444}
+.priority-card.p2,.priority-card.p3{border-left-color:#f59e0b}
+.priority-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;background:#ef4444;color:white}
+.priority-rank.p2,.priority-rank.p3{background:#f59e0b}
+.priority-body{flex:1}
+.priority-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.priority-score{font-size:11px;color:#9ca3af;margin-bottom:5px}
+.priority-fix{font-size:12px;color:#374151;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:620px){.grid2{grid-template-columns:1fr}}
+.crit-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 16px;border-top:3px solid #e5e7eb}
+.crit-card.pass{border-top-color:#22c55e}.crit-card.warn{border-top-color:#f59e0b}.crit-card.fail{border-top-color:#ef4444}
+.crit-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:6px}
+.crit-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;line-height:1.3}
+.crit-score{font-size:22px;font-weight:800;line-height:1;flex-shrink:0}
+.crit-score.pass{color:#22c55e}.crit-score.warn{color:#f59e0b}.crit-score.fail{color:#ef4444}
+.sbar{height:4px;background:#f0f0f0;border-radius:2px;margin-bottom:10px;position:relative;overflow:visible}
+.sbar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.sbar-fill.pass{background:#22c55e}.sbar-fill.warn{background:#f59e0b}.sbar-fill.fail{background:#ef4444}
+.sbar-marker{position:absolute;top:-3px;bottom:-3px;left:80%;width:2px;background:#374151;opacity:.15;border-radius:1px}
+.sbar-marker::after{content:'8';position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:9px;color:#9ca3af}
+.crit-body{font-size:12px}
+.crit-row{margin-bottom:6px}
+.crit-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#374151;margin-bottom:2px}
+.crit-txt{color:#4b5563;line-height:1.5}
+details summary{cursor:pointer;font-size:12px;color:#1877f2;font-weight:500;margin-top:6px;user-select:none;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details[open] summary{margin-bottom:6px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:680px){.grid3{grid-template-columns:1fr}}
+@media(max-width:900px) and (min-width:681px){.grid3{grid-template-columns:1fr 1fr}}
+.info-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 16px}
+.info-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.info-lbl.green{color:#22c55e}.info-lbl.red{color:#ef4444}.info-lbl.blue{color:#1877f2}.info-lbl.orange{color:#f59e0b}
+.li{font-size:12px;color:#374151;margin-bottom:6px;padding-left:13px;position:relative;line-height:1.5}
+.li::before{content:'>';position:absolute;left:0;color:#9ca3af}
+.prose{font-size:12px;color:#374151;line-height:1.6}
+.fix-list{display:flex;flex-direction:column;gap:10px}
+.fix-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 16px;border-left:4px solid #1877f2}
+.fix-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.fix-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.fix-lbl.issue{color:#ef4444}.fix-lbl.better{color:#22c55e}
+.fix-txt{font-size:12px;color:#374151;line-height:1.5}
+.visual-box{background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.visual-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#4361ee;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.visual-prose{font-size:13px;color:#374151;line-height:1.7}
+.imp-wrap{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:#f8faff;color:#1877f2;border:1.5px dashed #1877f2;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.gen-btn:hover{background:#e8f1ff}
+.gen-btn:disabled{color:#9ca3af;border-color:#d1d5db;cursor:not-allowed;background:#f9fafb}
+.gen-spin{width:14px;height:14px;border:2px solid #c7d2fe;border-top-color:#1877f2;border-radius:50%;animation:spin .8s linear infinite;display:none}
+.imp-body{padding:16px;display:none}
+.imp-body.open{display:block}
+.imp-text{font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap;font-family:inherit}
+.hist-card{background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;background:#f8faff;border-bottom:1px solid #e5e7eb}
+.hist-hdr:hover{background:#e8f1ff}
+.hist-title{font-size:13px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:7px}
+.hist-body{display:none}.hist-body.open{display:block}
+.hist-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f2f8;font-size:12px}
+.hist-row:last-child{border-bottom:none}
+.hist-date{color:#9ca3af;flex-shrink:0;min-width:88px}
+.hist-fmt{flex-shrink:0;min-width:56px}
+.hist-fw{flex-shrink:0;min-width:40px;font-size:10px;font-weight:700;color:#1877f2}
+.hist-headline{color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-score{font-weight:800;flex-shrink:0;text-align:right}
+.hist-empty{padding:18px 16px;color:#9ca3af;font-size:13px;text-align:center}
+.hist-clear{font-size:11px;color:#9ca3af;cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid #e5e7eb;background:white}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#1877f2;color:white;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer}
+.reset-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;background:white;color:#1877f2;border:1.5px solid #1877f2;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin:16px auto 0;width:fit-content}
+.reset-btn:hover{background:#e8f1ff}
+.no-media-note{font-size:12px;color:#f59e0b;background:#fffbeb;border:1px solid #fde68a;padding:6px 10px;border-radius:6px;margin-top:6px}
+@media print{
+  body{background:white}
+  .hdr,.no-print,#apiBanner{display:none!important}
+  .main{padding:0;max-width:100%}
+  .card,.crit-card,.info-card,.fix-card,.priority-card,.fw-adh-card{box-shadow:none;border:1px solid #e5e7eb;page-break-inside:avoid}
+  details{display:block}
+  details summary{display:none}
+  details>div{display:block!important}
+  .imp-wrap,.hist-card{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="apiBanner" style="display:none">
+  <div class="api-banner">
+    <div class="api-banner-text"><strong>Anthropic API Key</strong> &mdash; enter once, saved in your browser &nbsp;&middot;&nbsp; <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#a5b4fc;font-size:12px">Get a key &#8599;</a></div>
+    <div id="apiInputRow" class="api-input-row">
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-..." />
+      <button class="api-save-btn" onclick="saveApiKey()">Save Key</button>
+    </div>
+    <div id="apiOkRow" class="api-ok" style="display:none">
+      &#10003; API key saved <span class="api-ok-change" onclick="changeApiKey()">Change</span>
+      <button class="api-clear-btn" onclick="clearApiKey()">Remove</button>
+    </div>
+  </div>
+</div>
+<div class="hdr no-print">
+  <div class="hdr-left">
+    <div class="hdr-logo">&#127916;</div>
+    <div>
+      <div class="hdr-title">Meta Ad Evaluator</div>
+      <div class="hdr-sub">Facebook &amp; Instagram &middot; Financial Education &middot; Singapore</div>
+    </div>
+  </div>
+  <div class="mas-badge">MAS COMPLIANT</div>
+</div>
+<div class="main">
+  <div id="formSection" class="card">
+    <div class="card-hdr">
+      <div class="card-title">Submit Ad for Evaluation</div>
+      <div class="card-sub">Select format and framework — Claude will score every element and analyse your creative visually.</div>
+    </div>
+    <div class="card-body">
+      <!-- FORMAT -->
+      <div class="fg">
+        <div class="lbl">Ad Format <span class="req">*</span></div>
+        <div class="format-selector">
+          <button class="format-btn active" id="btnImg" onclick="setFormat('image')">
+            <span class="fmt-icon">&#128444;&#65039;</span><span>Static Image Ad</span>
+          </button>
+          <button class="format-btn" id="btnVid" onclick="setFormat('video')">
+            <span class="fmt-icon">&#127916;</span><span>Video Ad</span>
+          </button>
+        </div>
+      </div>
+      <!-- OBJECTIVE + PLACEMENT -->
+      <div class="row2">
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Ad Objective <span class="req">*</span></div>
+          <select id="adObjective" onchange="onObjectiveChange()">
+            <option value="">Select objective...</option>
+            <option value="Awareness">Awareness — reach &amp; brand recall</option>
+            <option value="Traffic">Traffic — clicks to website or LP</option>
+            <option value="Lead Generation">Lead Generation — form fills, sign-ups</option>
+            <option value="Conversions">Conversions — sales, enrolments</option>
+            <option value="Engagement">Engagement — likes, shares, comments</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Placement <span class="opt">optional</span></div>
+          <select id="adPlacement">
+            <option value="">All placements / not sure</option>
+            <option value="Facebook Feed">Facebook Feed</option>
+            <option value="Instagram Feed">Instagram Feed</option>
+            <option value="Instagram Stories / Reels">Instagram Stories / Reels</option>
+            <option value="Facebook Stories">Facebook Stories</option>
+          </select>
+        </div>
+      </div>
+      <!-- FRAMEWORK -->
+      <div class="fg" style="margin-top:16px">
+        <div class="lbl">Copywriting Framework <span class="opt">optional</span></div>
+        <select id="adFramework">
+          <option value="">Auto-select based on format &amp; objective</option>
+          <option value="PAS">PAS — Problem, Agitate, Solution</option>
+          <option value="AIDA">AIDA — Attention, Interest, Desire, Action</option>
+          <option value="HSO">HSO — Hook, Story, Offer</option>
+          <option value="FAB">FAB — Features, Advantages, Benefits</option>
+        </select>
+        <div id="fwRecommendation" class="fw-rec"></div>
+      </div>
+      <!-- AUDIENCE -->
+      <div class="fg">
+        <div class="lbl">Target Audience <span class="opt">optional</span></div>
+        <input type="text" id="targetAudience" placeholder="e.g. Singaporeans aged 30-50, beginners who feel lost in the market" />
+      </div>
+      <!-- PRIMARY TEXT -->
+      <div class="fg">
+        <div class="lbl">Primary Text <span class="req">*</span></div>
+        <textarea id="primaryText" rows="5" placeholder="The main copy shown above the image in the feed..." oninput="updateWordCount('primaryText','ptCount')"></textarea>
+        <div class="counter-row">
+          <div class="hint">Recommended under 125 chars for best reach. Longer copy is fine but may be truncated.</div>
+          <div class="counter" id="ptCount">0 words</div>
+        </div>
+      </div>
+      <!-- HEADLINE + DESC -->
+      <div class="row2">
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Headline <span class="req">*</span></div>
+          <input type="text" id="adHeadline" placeholder="Bold text shown below the image" oninput="updateCounter('adHeadline','hlCount')" />
+          <div class="counter-row"><div class="hint">Ideal: under 30 chars</div><div class="counter" id="hlCount">0 chars</div></div>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Description <span class="opt">optional</span></div>
+          <input type="text" id="adDescription" placeholder="Smaller text below headline" oninput="updateCounter('adDescription','descCount')" />
+          <div class="counter-row"><div class="hint">Ideal: under 30 chars</div><div class="counter" id="descCount">0 chars</div></div>
+        </div>
+      </div>
+      <!-- CTA + LP -->
+      <div class="row2" style="margin-top:16px">
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">CTA Button <span class="req">*</span></div>
+          <select id="ctaButton">
+            <option value="">Select CTA...</option>
+            <option value="Learn More">Learn More</option>
+            <option value="Sign Up">Sign Up</option>
+            <option value="Register Now">Register Now</option>
+            <option value="Book Now">Book Now</option>
+            <option value="Download">Download</option>
+            <option value="Get Offer">Get Offer</option>
+            <option value="Apply Now">Apply Now</option>
+            <option value="Shop Now">Shop Now</option>
+            <option value="Subscribe">Subscribe</option>
+            <option value="Watch More">Watch More</option>
+            <option value="Send Message">Send Message</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Landing Page URL <span class="opt">optional</span></div>
+          <input type="url" id="lpUrl" placeholder="https://example.com/your-page" />
+        </div>
+      </div>
+      <!-- VIDEO FIELDS -->
+      <div class="video-fields" id="videoFields" style="margin-top:16px">
+        <div class="fg">
+          <div class="lbl">Video Hook — First 3 Seconds <span class="req">*</span></div>
+          <input type="text" id="videoHook" placeholder="e.g. 'Most investors do THIS wrong...' shown over a chart, no audio" />
+          <div class="hint">Describe what the viewer sees and hears in the opening 3 seconds.</div>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <div class="lbl">Video Script / Notes <span class="opt">optional</span></div>
+          <textarea id="videoScript" rows="4" placeholder="Paste the script or describe the video flow, key messages, visuals, pacing..."></textarea>
+        </div>
+      </div>
+      <!-- CREATIVE UPLOAD -->
+      <div class="fg" style="margin-top:16px">
+        <div class="lbl" id="uploadLabel">Upload Ad Image <span class="opt">optional but scored</span></div>
+        <div class="upload-zone" id="uploadZone"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleDrop(event)">
+          <input type="file" id="creativeFile" accept="image/*" onchange="handleFile(this.files[0])" />
+          <div id="uploadPlaceholder">
+            <div class="upload-icon" id="uploadIcon">&#128444;&#65039;</div>
+            <div class="upload-title" id="uploadHint">Click to upload or drag &amp; drop</div>
+            <div class="upload-sub" id="uploadSub">PNG, JPG, GIF up to 10MB</div>
+          </div>
+          <div id="uploadPreviewWrap" style="display:none;width:100%;text-align:center"></div>
+        </div>
+        <div id="noMediaNote" class="no-media-note" style="display:none">No creative uploaded — visual criteria will be scored based on copy and context only.</div>
+      </div>
+      <div id="formError"></div>
+      <button class="submit-btn" onclick="runEvaluation()"><span>&#9889;</span> Evaluate Ad</button>
+    </div>
+  </div>
+  <div id="loadingSection">
+    <div class="spinner"></div>
+    <div class="load-title">Evaluating your ad...</div>
+    <div class="load-sub" id="loadSub">Scoring copy, framework adherence, visual quality, and MAS compliance</div>
+    <div class="load-steps">
+      <div class="lstep" id="s1">&#128203; Reading ad structure and objective...</div>
+      <div class="lstep" id="s2">&#127919; Scoring all criteria...</div>
+      <div class="lstep" id="s3">&#128214; Analysing framework adherence stage by stage...</div>
+      <div class="lstep" id="s4">&#128444;&#65039; Evaluating visual quality...</div>
+      <div class="lstep" id="s5">&#9989; Compiling full evaluation report...</div>
+    </div>
+  </div>
+  <div id="resultsSection"></div>
+  <div class="section no-print" style="margin-top:8px">
+    <div class="hist-card">
+      <div class="hist-hdr" onclick="toggleHist()">
+        <div class="hist-title">&#128196; Evaluation History <span style="font-size:11px;color:#6b7280;font-weight:400">(this session)</span></div>
+        <div id="histChev" style="font-size:14px;color:#1877f2">&#9660;</div>
+      </div>
+      <div class="hist-body" id="histBody">
+        <div id="histList"><div class="hist-empty">No evaluations yet.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var evalHistory=[],lastData=null,lastInputs=null,currentFormat='image';
+var uploadedImageB64=null,uploadedImageMime='image/jpeg',uploadedVideoFrames=[];
+
+// ---- FRAMEWORKS ----
+var AD_FRAMEWORKS={
+  'PAS':{name:'PAS',full:'Problem - Agitate - Solution',bestFor:'Sales & Conversions',
+    stages:['Problem','Agitate','Solution'],
+    stageDesc:['Identify the exact pain the target reader is experiencing right now',
+               'Make the pain feel urgent — show the cost of staying stuck',
+               'Present your product or event as the clear, credible solution']},
+  'AIDA':{name:'AIDA',full:'Attention - Interest - Desire - Action',bestFor:'Awareness, Traffic & Lead Gen',
+    stages:['Attention','Interest','Desire','Action'],
+    stageDesc:['Hook the viewer in the first second — pattern interrupt, bold claim, or curiosity gap',
+               'Build relevance with a surprising stat, relatable situation, or strong empathy',
+               'Make the viewer want the outcome — paint the after, not the features',
+               'One clear low-friction CTA — tell them exactly what to do next']},
+  'HSO':{name:'HSO',full:'Hook - Story - Offer',bestFor:'Video Ads',
+    stages:['Hook','Story','Offer'],
+    stageDesc:['Open-3-second pattern interrupt that stops the scroll before the viewer moves on',
+               'Brief relatable narrative — a problem, a turning point, a transformation',
+               'Present the offer clearly: what it is, who it is for, and what to do next']},
+  'FAB':{name:'FAB',full:'Features - Advantages - Benefits',bestFor:'Product Launches & Warm Audiences',
+    stages:['Features','Advantages','Benefits'],
+    stageDesc:['What the product or programme includes — specifics, not generics',
+               'How those features work better than the alternative (doing nothing, other courses)',
+               'What the viewer actually gains: clarity, confidence, better decisions, financial control']}
+};
+
+var FW_RECOMMENDATIONS={
+  'image':{'Awareness':{primary:'AIDA',alt:'FAB'},'Traffic':{primary:'AIDA',alt:'PAS'},'Lead Generation':{primary:'PAS',alt:'AIDA'},'Conversions':{primary:'PAS',alt:'FAB'},'Engagement':{primary:'AIDA',alt:null}},
+  'video':{'Awareness':{primary:'HSO',alt:'AIDA'},'Traffic':{primary:'HSO',alt:'PAS'},'Lead Generation':{primary:'HSO',alt:'PAS'},'Conversions':{primary:'HSO',alt:'PAS'},'Engagement':{primary:'HSO',alt:'AIDA'}}
+};
+
+// ---- FORMAT / OBJECTIVE CHANGE ----
+function setFormat(fmt){
+  currentFormat=fmt;
+  document.getElementById('btnImg').classList.toggle('active',fmt==='image');
+  document.getElementById('btnVid').classList.toggle('active',fmt==='video');
+  document.getElementById('videoFields').classList.toggle('show',fmt==='video');
+  var lbl=document.getElementById('uploadLabel'),inp=document.getElementById('creativeFile');
+  var icon=document.getElementById('uploadIcon'),hint=document.getElementById('uploadHint'),sub=document.getElementById('uploadSub');
+  if(fmt==='video'){lbl.innerHTML='Upload Video File <span class="opt">optional but scored</span>';inp.accept='video/*,image/*';icon.textContent='\u{1F3AC}';hint.textContent='Click to upload or drag & drop';sub.textContent='MP4, MOV, AVI — Claude extracts 4 key frames for visual analysis';}
+  else{lbl.innerHTML='Upload Ad Image <span class="opt">optional but scored</span>';inp.accept='image/*';icon.textContent='\u{1F5BC}️';hint.textContent='Click to upload or drag & drop';sub.textContent='PNG, JPG, GIF up to 10MB';}
+  clearUploadState();
+  updateFwRecommendation();
+}
+
+function onObjectiveChange(){updateFwRecommendation();}
+
+function updateFwRecommendation(){
+  var obj=document.getElementById('adObjective').value;
+  var fwSel=document.getElementById('adFramework');
+  var box=document.getElementById('fwRecommendation');
+  var recs=FW_RECOMMENDATIONS[currentFormat]||{};
+  var rec=recs[obj];
+  if(!rec||!obj){box.style.display='none';return;}
+  var p=AD_FRAMEWORKS[rec.primary],a=rec.alt?AD_FRAMEWORKS[rec.alt]:null;
+  box.innerHTML='&#128161; <strong>Recommended:</strong><span class="fw-rec-tag fw-rec-primary">'+rec.primary+'</span> '+p.full+' &mdash; '+p.bestFor
+    +(a?' &nbsp;|&nbsp; Alternative: <span class="fw-rec-tag fw-rec-alt">'+rec.alt+'</span> '+a.bestFor:'');
+  box.style.display='block';
+  if(!fwSel.value)fwSel.value=rec.primary;
+}
+
+// ---- UPLOAD ----
+function handleDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag');var f=e.dataTransfer.files[0];if(f)handleFile(f);}
+function handleFile(file){if(!file)return;clearUploadState();if(file.type.startsWith('video/'))handleVideoFile(file);else if(file.type.startsWith('image/'))handleImageFile(file);}
+
+function handleImageFile(file){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result;uploadedImageMime=file.type||'image/jpeg';uploadedImageB64=b64.split(',')[1];
+    document.getElementById('uploadPlaceholder').style.display='none';document.getElementById('noMediaNote').style.display='none';
+    var wrap=document.getElementById('uploadPreviewWrap');
+    wrap.innerHTML='<img src="'+b64+'" class="upload-preview" alt="Ad preview" /><br><span class="upload-clear" onclick="clearUploadFull(event)">&#10005; Remove image</span>';
+    wrap.style.display='block';
+  };reader.readAsDataURL(file);
+}
+
+function handleVideoFile(file){
+  document.getElementById('uploadPlaceholder').style.display='none';
+  var wrap=document.getElementById('uploadPreviewWrap');
+  wrap.innerHTML='<div class="extracting-bar"><div class="ex-spin"></div><span>Extracting frames from video...</span></div>';
+  wrap.style.display='block';
+  var url=URL.createObjectURL(file),video=document.createElement('video');
+  video.muted=true;video.crossOrigin='anonymous';video.preload='auto';video.src=url;
+  video.addEventListener('loadedmetadata',function(){
+    var dur=video.duration;
+    var timestamps=[Math.min(0.5,dur*0.05),dur*0.25,dur*0.5,dur*0.75];
+    var labels=['Opening','25%','50%','75%'],frames=[],idx=0;
+    function captureNext(){if(idx>=timestamps.length)return;video.currentTime=timestamps[idx];}
+    video.addEventListener('seeked',function onSeeked(){
+      if(idx>=timestamps.length)return;
+      var canvas=document.createElement('canvas');canvas.width=Math.min(video.videoWidth,1280);canvas.height=Math.round(canvas.width*video.videoHeight/video.videoWidth);
+      var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      frames.push({b64:canvas.toDataURL('image/jpeg',0.85).split(',')[1],label:labels[idx]});idx++;
+      if(idx<timestamps.length){captureNext();}
+      else{video.removeEventListener('seeked',onSeeked);URL.revokeObjectURL(url);uploadedVideoFrames=frames;showFramePreview(frames,file.name,dur);}
+    });captureNext();
+  });
+  video.addEventListener('error',function(){URL.revokeObjectURL(url);document.getElementById('uploadPreviewWrap').innerHTML='<div style="color:#ef4444;font-size:13px">&#10060; Could not process video. Try MP4 format.</div><span class="upload-clear" onclick="clearUploadFull(event)">&#10005; Try again</span>';});
+  video.load();
+}
+
+function showFramePreview(frames,filename,dur){
+  var wrap=document.getElementById('uploadPreviewWrap');
+  var mins=Math.floor(dur/60),secs=Math.round(dur%60),durStr=mins>0?(mins+'m '+secs+'s'):(secs+'s');
+  var gridHtml='<div class="frame-grid">'+frames.map(function(f){return'<div class="frame-wrap"><img class="frame-thumb" src="data:image/jpeg;base64,'+f.b64+'" alt="'+esc(f.label)+'" /><div class="frame-label">'+esc(f.label)+'</div></div>';}).join('')+'</div>';
+  wrap.innerHTML=gridHtml+'<div style="font-size:12px;color:#22c55e;font-weight:600;margin-bottom:4px">&#10003; '+frames.length+' frames extracted from '+esc(filename)+' ('+durStr+')</div><span class="upload-clear" onclick="clearUploadFull(event)">&#10005; Remove video</span>';
+  wrap.style.display='block';document.getElementById('noMediaNote').style.display='none';
+}
+
+function clearUploadState(){uploadedImageB64=null;uploadedVideoFrames=[];}
+function clearUploadFull(e){
+  if(e){e.stopPropagation();e.preventDefault();}clearUploadState();document.getElementById('creativeFile').value='';
+  var ph=document.getElementById('uploadPlaceholder');ph.style.display='flex';ph.style.flexDirection='column';ph.style.alignItems='center';
+  document.getElementById('uploadPreviewWrap').style.display='none';document.getElementById('uploadPreviewWrap').innerHTML='';
+}
+
+// ---- API KEY ----
+function saveApiKey(){var k=document.getElementById('apiKeyInput').value.trim();if(!k.startsWith('sk-')){alert('Enter a valid Anthropic API key (starts with sk-).');return;}try{localStorage.setItem('anthropicApiKey',k);}catch(e){}showApiOk();}
+function clearApiKey(){try{localStorage.removeItem('anthropicApiKey');}catch(e){}document.getElementById('apiKeyInput').value='';document.getElementById('apiInputRow').style.display='flex';document.getElementById('apiOkRow').style.display='none';}
+function changeApiKey(){document.getElementById('apiKeyInput').value='';document.getElementById('apiInputRow').style.display='flex';document.getElementById('apiOkRow').style.display='none';}
+function showApiOk(){document.getElementById('apiInputRow').style.display='none';document.getElementById('apiOkRow').style.display='flex';}
+function getSavedKey(){try{return localStorage.getItem('anthropicApiKey')||'';}catch(e){return '';}}
+function checkCowork(){return !!(window.cowork&&typeof window.cowork.askClaude==='function');}
+
+document.addEventListener('DOMContentLoaded',function(){
+  if(!checkCowork()){document.getElementById('apiBanner').style.display='block';try{if(localStorage.getItem('anthropicApiKey'))showApiOk();}catch(e){}}
+  setTimeout(function(){if(checkCowork())document.getElementById('apiBanner').style.display='none';},1000);
+});
+
+// ---- AI CALL ----
+async function callAI(prompt,imageBlocks){
+  var useCowork=checkCowork();
+  if(useCowork&&(!imageBlocks||imageBlocks.length===0)){try{var r=await window.cowork.askClaude(prompt);if(typeof r==='string')return r;if(r&&typeof r==='object')return r.text||r.content||r.response||r.message||JSON.stringify(r);return String(r||'');}catch(e){throw new Error('Cowork AI failed: '+(e&&e.message?e.message:String(e)));}}
+  var apiKey=getSavedKey();if(!apiKey)throw new Error('No API key saved. Enter your Anthropic API key in the banner above.');
+  var content=[];
+  if(imageBlocks&&imageBlocks.length>0){
+    if(imageBlocks.length>1)content.push({type:'text',text:'Below are '+imageBlocks.length+' frames extracted from the video ad:'});
+    imageBlocks.forEach(function(b,i){if(imageBlocks.length>1)content.push({type:'text',text:'Frame '+(i+1)+' — '+b.label+':'});content.push({type:'image',source:{type:'base64',media_type:b.mime||'image/jpeg',data:b.b64}});});
+  }
+  content.push({type:'text',text:prompt});
+  var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,messages:[{role:'user',content:content}]})});
+  if(!resp.ok){var e=await resp.json().catch(function(){return{};});var msg=(e.error&&e.error.message)?e.error.message:resp.statusText;if(resp.status===401)throw new Error('Invalid API key.');if(resp.status===429)throw new Error('Rate limit reached. Please wait and try again.');throw new Error('API error '+resp.status+': '+msg);}
+  var d=await resp.json();return d.content[0].text;
+}
+
+// ---- JSON PARSE ----
+function robustParse(raw){
+  if(!raw||!raw.trim())throw new Error('Empty response from AI');
+  var text=raw.replace(/```(?:json)?\s*/gi,'').replace(/```\s*/g,'').trim();
+  var start=text.indexOf('{'),end=text.lastIndexOf('}');
+  if(start===-1||end<=start)throw new Error('No JSON found in response');
+  var j=text.slice(start,end+1);
+  try{return JSON.parse(j);}catch(_){}
+  j=fixNl(j);try{return JSON.parse(j);}catch(_){}
+  j=j.split('').map(function(c){var n=c.charCodeAt(0);return(n<32&&n!==9&&n!==10&&n!==13)?'':c;}).join('');
+  try{return JSON.parse(j);}catch(e){throw new Error('JSON invalid: '+e.message);}
+}
+function fixNl(s){var o='',inS=false,esc_=false;for(var i=0;i<s.length;i++){var c=s[i];if(esc_){o+=c;esc_=false;continue;}if(c==='\\'){o+=c;esc_=true;continue;}if(c==='"'){inS=!inS;o+=c;continue;}if(inS){if(c==='\n'){o+='\\n';continue;}if(c==='\r'){o+='\\r';continue;}if(c==='\t'){o+='\\t';continue;}}o+=c;}return o;}
+
+function cls(s){return s>=8?'pass':s>=6?'warn':'fail';}
+function esc(s){if(!s)return'';var d=document.createElement('div');d.appendChild(document.createTextNode(String(s)));return d.innerHTML;}
+function updateCounter(id,did){var l=document.getElementById(id).value.length;var el=document.getElementById(did);el.textContent=l+' chars';el.className='counter'+(l>45?' over':l>=20?' ok':'');}
+function updateWordCount(id,did){var val=document.getElementById(id).value.trim();var w=val?val.split(/\s+/).length:0;var el=document.getElementById(did);el.textContent=w+' words';el.className='counter'+(w>60?' over':w>=15?' ok':'');}
+
+// ---- CRITERIA ----
+var CRITERIA_IMAGE=[
+  {key:'headline_strength',label:'Headline Strength'},{key:'primary_copy_hook',label:'Primary Copy Hook'},
+  {key:'problem_desire_resonance',label:'Problem / Desire Resonance'},{key:'audience_clarity',label:'Audience Clarity'},
+  {key:'offer_clarity',label:'Offer Clarity'},{key:'cta_button_fit',label:'CTA Button Fit'},
+  {key:'visual_copy_alignment',label:'Visual-Copy Alignment'},{key:'scroll_stop_visual',label:'Scroll-Stop Visual Power'},
+  {key:'credibility_trust',label:'Credibility Without Income Claims'},{key:'urgency_reason_to_act',label:'Urgency / Reason to Act Now'}
+];
+var CRITERIA_VIDEO=[
+  {key:'headline_strength',label:'Headline Strength'},{key:'primary_copy_hook',label:'Primary Copy Hook'},
+  {key:'problem_desire_resonance',label:'Problem / Desire Resonance'},{key:'audience_clarity',label:'Audience Clarity'},
+  {key:'offer_clarity',label:'Offer Clarity'},{key:'cta_button_fit',label:'CTA Button Fit'},
+  {key:'three_second_hook',label:'3-Second Hook Strength'},{key:'visual_copy_alignment',label:'Visual-Copy Alignment'},
+  {key:'scroll_stop_visual',label:'Scroll-Stop Visual Power'},{key:'credibility_trust',label:'Credibility Without Income Claims'},
+  {key:'urgency_reason_to_act',label:'Urgency / Reason to Act Now'},{key:'silent_viewing',label:'Silent Viewing / Captions'}
+];
+function getCriteria(){return currentFormat==='video'?CRITERIA_VIDEO:CRITERIA_IMAGE;}
+function getMaxScore(){return currentFormat==='video'?120:100;}
+
+// ---- BUILD PROMPT ----
+function buildPrompt(inputs){
+  var criteria=getCriteria();var hasImage=inputs.imageBlocks&&inputs.imageBlocks.length>0;var isVideo=inputs.format==='video';
+  var cwf=inputs.framework?AD_FRAMEWORKS[inputs.framework]:null;
+  var visualCtx=hasImage?(isVideo?'Video frames provided ('+inputs.imageBlocks.length+' frames). Analyse each frame for visual storytelling, pacing, scroll-stop power, text overlays, and alignment with copy.':'Ad image provided. Analyse for scroll-stop power, focal point, colour/contrast, text overlay legibility, and copy alignment.'):'No creative uploaded. Score visual criteria from copy and context only.';
+  var cd={
+    'headline_strength':'Stops scroll immediately. Clear benefit or curiosity gap. Under 30 chars ideal. Specific, not hype.',
+    'primary_copy_hook':'First 1-2 lines hook before the "See More" cut. Pattern interrupt, immediate relevance.',
+    'problem_desire_resonance':'Speaks to a real felt pain or aspiration. Target reader thinks: that is exactly me.',
+    'audience_clarity':'Crystal clear who this is for within 3 seconds. Reader immediately self-selects.',
+    'offer_clarity':'Reader knows exactly what they get if they click. No ambiguity.',
+    'cta_button_fit':'Button matches the ask and reduces friction. Right verb for the commitment level.',
+    'visual_copy_alignment':hasImage?(isVideo?'Frames and copy tell the same story.':'Image reinforces the headline and copy. No contradiction.'):'Evaluate whether copy alone paints a clear picture.',
+    'scroll_stop_visual':hasImage?(isVideo?'Opening frame is thumb-stopping before any text.':'Image is visually distinct, stands out in feed.'):'Evaluate from copy ability to create compelling mental image.',
+    'credibility_trust':'Proof or credibility signals. No specific % returns, dollar profits, or guaranteed results.',
+    'urgency_reason_to_act':'Believable reason to act now. Not manufactured urgency.',
+    'three_second_hook':'First 3 seconds are a pattern interrupt. Strong visual or audio hook immediately.',
+    'silent_viewing':'Works without sound. Captions, text overlays, or visual storytelling carry the message.'
+  };
+  var cP=criteria.map(function(c,i){return (i+1)+'. '+c.key+' ('+c.label+'): '+cd[c.key];}).join('\n');
+  var jC=criteria.map(function(c){return '    "'+c.key+'": {"score":<0-10>,"what_worked":"<str>","needs_improvement":"<str>","suggested_improvement":"<str>"}';}).join(',\n');
+  var fwSection='',fwJSON='';
+  if(cwf){
+    var sL=cwf.stages.map(function(s,i){return '  '+s+': '+cwf.stageDesc[i];}).join('\n');
+    var sJ=cwf.stages.map(function(s){return '      "'+s+'": {"score":<0-10>,"note":"<how well this stage is executed in the ad>"}';}).join(',\n');
+    fwSection='COPYWRITING FRAMEWORK: '+cwf.name+' ('+cwf.full+')\nBest for: '+cwf.bestFor+'\nStages and what to look for:\n'+sL+'\nScore each criterion through this framework lens. Also evaluate framework stage adherence separately.\n\n';
+    fwJSON='"framework_used": "'+cwf.name+'",\n  "framework_adherence": {\n    "overall": "<Excellent|Strong|Partial|Weak>",\n    "summary": "<2-3 sentences on how well the ad follows the '+cwf.name+' structure>",\n    "stages": {\n'+sJ+'\n    }\n  },\n';
+  } else {fwJSON='"framework_used": null,\n  "framework_adherence": null,\n';}
+  return 'You are an expert Meta (Facebook/Instagram) ad evaluator for a financial education company in Singapore.\n\n'
+    +'AD DETAILS:\nFormat: '+inputs.format+' Ad\nObjective: '+inputs.objective+'\nPlacement: '+(inputs.placement||'Not specified')+'\nTarget Audience: '+(inputs.audience||'Not specified')+'\nHeadline: '+inputs.headline+'\nDescription: '+(inputs.description||'(none)')+'\nCTA Button: '+inputs.cta+'\nLanding Page: '+(inputs.url||'(not provided)')+'\n'
+    +(isVideo?'Video Hook (first 3s): '+(inputs.videoHook||'(not provided)')+'\nVideo Script/Notes: '+(inputs.videoScript||'(not provided)')+'\n':'')
+    +'Primary Text:\n'+inputs.primaryText+'\n\nCREATIVE: '+visualCtx+'\n\n'
+    +fwSection
+    +'STEP 1 — MAS COMPLIANCE (informational only, does NOT affect scores):\nFlag risky wording. Risky: specific % returns, dollar profit/income claims, guaranteed results. Safe: gained clarity, became more confident, learned a structured process.\n\n'
+    +'STEP 2 — SCORE CRITERIA (max '+getMaxScore()+'pt, minimum 8/10 each to be publish-ready):\n0-2=Missing/poor, 3-4=Vague/generic, 5-6=Acceptable, 7=Good, 8=Strong, 9-10=Excellent.\n\n'+cP+'\n\n'
+    +'STEP 3 — CREATIVE ANALYSIS: Visual critique covering scroll-stop power, focal point, colour/contrast, text overlay legibility, emotional tone, and copy alignment. Write "N/A — no creative provided." if none.\n\n'
+    +'STEP 4 — 5 PRACTICAL FIXES: Quote the current issue and give a rewritten/improved version.\n\n'
+    +'FINAL APPROVAL: Approved = all criteria 8+. Approved with minor edits = score >= '+Math.round(getMaxScore()*0.72)+' and 1-2 below 8. Needs revision = otherwise.\n\n'
+    +'OUTPUT: Raw valid JSON only. No markdown. All strings on one line.\n\n'
+    +'{\n  '+fwJSON
+    +'  "compliance_status": "<Clean|Flagged - see notes>",\n'
+    +'  "compliance_note": "<risky wording + safer alternative, or empty string>",\n'
+    +'  "overall_score": <sum of criteria scores>,\n'
+    +'  "max_score": '+getMaxScore()+',\n'
+    +'  "criteria": {\n'+jC+'\n  },\n'
+    +'  "creative_analysis": "<visual critique or N/A>",\n'
+    +'  "top_3_strengths": ["<str>","<str>","<str>"],\n'
+    +'  "top_3_weaknesses": ["<str>","<str>","<str>"],\n'
+    +'  "lp_alignment": "<ad-to-LP alignment or N/A>",\n'
+    +'  "practical_fixes": [\n'
+    +'    {"current_issue":"<str>","better_version":"<str>"},\n'
+    +'    {"current_issue":"<str>","better_version":"<str>"},\n'
+    +'    {"current_issue":"<str>","better_version":"<str>"},\n'
+    +'    {"current_issue":"<str>","better_version":"<str>"},\n'
+    +'    {"current_issue":"<str>","better_version":"<str>"}\n'
+    +'  ],\n'
+    +'  "final_approval": "<Approved|Approved with minor edits|Needs revision>",\n'
+    +'  "final_approval_explanation": "<2-3 sentences>"\n'
+    +'}';
+}
+
+function buildRewritePrompt(inputs,data){
+  var criteria=getCriteria();var cwf=inputs.framework?AD_FRAMEWORKS[inputs.framework]:null;
+  var feedback=criteria.map(function(c){var cr=data.criteria&&data.criteria[c.key];if(!cr)return'';return'- '+c.label+' ('+cr.score+'/10): '+cr.needs_improvement+' -> '+cr.suggested_improvement;}).filter(Boolean).join('\n');
+  var fwI=cwf?'Structure the ad using the '+cwf.name+' framework ('+cwf.full+'). '+cwf.stages.map(function(s,i){return s+': '+cwf.stageDesc[i];}).join('. ')+'.\n\n':'';
+  return 'You are an expert Meta ad copywriter for a financial education company in Singapore.\n\nRewrite this '+inputs.format+' ad to score 8/10 on every criterion.\n'+fwI+'OBJECTIVE: '+inputs.objective+'\n'+(inputs.audience?'AUDIENCE: '+inputs.audience+'\n':'')+'\nORIGINAL HEADLINE: '+inputs.headline+'\nORIGINAL CTA: '+inputs.cta+'\nORIGINAL PRIMARY TEXT:\n'+inputs.primaryText+'\n\nIMPROVEMENT NOTES:\n'+feedback+'\n\n'+(inputs.url?'LANDING PAGE: '+inputs.url+'\n\n':'')+'Output format:\n\nHEADLINE: [your headline]\nDESCRIPTION: [your description]\nCTA: [button label]\n\nPRIMARY TEXT:\n[your primary text]\n'+(inputs.format==='video'?'\nVIDEO HOOK (first 3 seconds):\n[describe the opening]\n':'')+'No commentary.';
+}
+
+// ---- HISTORY ----
+function toggleHist(){var b=document.getElementById('histBody');var c=document.getElementById('histChev');var o=b.classList.toggle('open');c.innerHTML=o?'&#9650;':'&#9660;';if(o)renderHistory();}
+function saveHistory(data,inputs){evalHistory.unshift({date:new Date().toLocaleString('en-SG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),format:inputs.format,framework:inputs.framework||'',headline:inputs.headline,score:data.overall_score,maxScore:data.max_score});if(evalHistory.length>20)evalHistory=evalHistory.slice(0,20);}
+function renderHistory(){
+  var el=document.getElementById('histList');
+  if(!evalHistory.length){el.innerHTML='<div class="hist-empty">No evaluations yet.</div>';return;}
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:1px solid #f0f2f8"><div style="font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase">Past Evaluations</div><button class="hist-clear" onclick="clearHistory()">Clear all</button></div>';
+  evalHistory.forEach(function(item){var pct=item.maxScore?Math.round(item.score/item.maxScore*100):0;var sc=pct>=80?'#22c55e':pct>=65?'#f59e0b':'#ef4444';var fmtCls=item.format==='image'?'format-tag-img':'format-tag-vid';html+='<div class="hist-row"><div class="hist-date">'+esc(item.date)+'</div><div class="hist-fmt"><span class="format-badge '+fmtCls+'" style="font-size:9px;padding:2px 6px">'+(item.format==='image'?'&#128444; Image':'&#127916; Video')+'</span></div><div class="hist-fw">'+esc(item.framework)+'</div><div class="hist-headline">'+esc(item.headline)+'</div><div class="hist-score" style="color:'+sc+'">'+item.score+'/'+item.maxScore+'</div></div>';});
+  el.innerHTML=html;
+}
+function clearHistory(){evalHistory=[];renderHistory();}
+
+// ---- RUN ----
+async function runEvaluation(){
+  var objective=document.getElementById('adObjective').value,placement=document.getElementById('adPlacement').value;
+  var audience=document.getElementById('targetAudience').value.trim(),framework=document.getElementById('adFramework').value;
+  var primaryText=document.getElementById('primaryText').value.trim(),headline=document.getElementById('adHeadline').value.trim();
+  var description=document.getElementById('adDescription').value.trim(),cta=document.getElementById('ctaButton').value;
+  var url=document.getElementById('lpUrl').value.trim(),videoHook=document.getElementById('videoHook').value.trim();
+  var videoScript=document.getElementById('videoScript').value.trim();
+  document.getElementById('formError').innerHTML='';
+  if(!objective){document.getElementById('formError').innerHTML='<div class="alert-err"><span>&#10060;</span><span>Please select an Ad Objective.</span></div>';return;}
+  if(!primaryText){document.getElementById('formError').innerHTML='<div class="alert-err"><span>&#10060;</span><span>Please enter the Primary Text.</span></div>';return;}
+  if(!headline){document.getElementById('formError').innerHTML='<div class="alert-err"><span>&#10060;</span><span>Please enter the Headline.</span></div>';return;}
+  if(!cta){document.getElementById('formError').innerHTML='<div class="alert-err"><span>&#10060;</span><span>Please select a CTA Button.</span></div>';return;}
+  if(currentFormat==='video'&&!videoHook){document.getElementById('formError').innerHTML='<div class="alert-err"><span>&#10060;</span><span>For video ads, please describe the Video Hook (first 3 seconds).</span></div>';return;}
+  var imageBlocks=[];
+  if(currentFormat==='image'&&uploadedImageB64){imageBlocks=[{b64:uploadedImageB64,mime:uploadedImageMime,label:'Ad image'}];}
+  else if(currentFormat==='video'&&uploadedVideoFrames.length>0){imageBlocks=uploadedVideoFrames.map(function(f){return{b64:f.b64,mime:'image/jpeg',label:f.label};});}
+  if(imageBlocks.length===0)document.getElementById('noMediaNote').style.display='block';
+  lastInputs={format:currentFormat,objective:objective,placement:placement,audience:audience,framework:framework,primaryText:primaryText,headline:headline,description:description,cta:cta,url:url,videoHook:videoHook,videoScript:videoScript,imageBlocks:imageBlocks};
+  document.getElementById('formSection').style.display='none';document.getElementById('loadingSection').style.display='block';
+  document.getElementById('resultsSection').style.display='none';document.getElementById('resultsSection').innerHTML='';
+  if(currentFormat==='video'&&imageBlocks.length>0)document.getElementById('loadSub').textContent='Analysing '+imageBlocks.length+' video frames + scoring '+getMaxScore()+'pt across all criteria';
+  var steps=['s1','s2','s3','s4','s5'],si=0;
+  var timer=setInterval(function(){if(si>0)document.getElementById(steps[si-1]).classList.add('done');if(si<steps.length){document.getElementById(steps[si]).classList.add('active');si++;}else clearInterval(timer);},2200);
+  try{
+    var raw=await callAI(buildPrompt(lastInputs),imageBlocks.length>0?imageBlocks:null);
+    clearInterval(timer);var data;
+    try{data=robustParse(raw);}catch(e){throw new Error('Could not parse evaluation: '+e.message+'\n\nFirst 600 chars:\n'+(raw||'').slice(0,600));}
+    lastData=data;saveHistory(data,lastInputs);renderResults(data);
+  }catch(err){
+    clearInterval(timer);document.getElementById('loadingSection').style.display='none';document.getElementById('formSection').style.display='block';
+    document.getElementById('formError').innerHTML='<div class="alert-err" style="white-space:pre-wrap"><span style="flex-shrink:0">&#10060;</span><span><strong>Evaluation failed:</strong>\n'+esc(err.message)+'</span></div>';
+  }
+}
+
+// ---- RENDER ----
+function renderResults(data){
+  document.getElementById('loadingSection').style.display='none';
+  var criteria=getCriteria();var cwf=lastInputs.framework?AD_FRAMEWORKS[lastInputs.framework]:null;
+  var pct=data.max_score?Math.round(data.overall_score/data.max_score*100):0;
+  var scoreClass=pct>=80?'pass':pct>=65?'warn':'fail';
+  var rating,ratingCls;
+  if(pct>=88){rating='Excellent';ratingCls='r-excellent';}else if(pct>=75){rating='Strong';ratingCls='r-strong';}else if(pct>=62){rating='Needs Improvement';ratingCls='r-needs';}else{rating='Weak';ratingCls='r-weak';}
+  var fmtClass=lastInputs.format==='image'?'format-tag-img':'format-tag-vid';
+  var fmtLabel=lastInputs.format==='image'?'&#128444;&#65039; Image Ad':'&#127916; Video Ad';
+  var cHtml=data.compliance_status&&data.compliance_status!=='Clean'
+    ?'<div class="compliance-box c-flag"><span class="c-icon">&#9888;</span><div><strong>MAS Note: '+esc(data.compliance_status)+'</strong>'+(data.compliance_note?'<div style="margin-top:4px;font-weight:400">'+esc(data.compliance_note)+'</div>':'')+'</div></div>'
+    :'<div class="compliance-box c-pass"><span class="c-icon">&#10003;</span><div><strong>MAS: No compliance concerns noted</strong></div></div>';
+  var aCls=data.final_approval==='Approved'?'r-excellent':data.final_approval==='Approved with minor edits'?'r-strong':'r-needs';
+  var aHtml='<div class="approval-box"><div class="approval-lbl">Final Decision</div><div><span class="rating-pill '+aCls+'" style="font-size:12px">'+esc(data.final_approval)+'</span></div>'+(data.final_approval_explanation?'<div class="approval-explain">'+esc(data.final_approval_explanation)+'</div>':'')+'</div>';
+  var below=criteria.filter(function(c){return(data.criteria&&data.criteria[c.key]?Number(data.criteria[c.key].score)||0:0)<8;});
+  var sendHtml=below.length===0
+    ?'<div class="send-ready"><div class="sr-icon">&#9989;</div><div><strong>Ready to publish</strong> — all criteria scored 8/10 or above.</div></div>'
+    :'<div class="send-notready"><div class="sr-icon">&#9888;&#65039;</div><div><strong>Not ready to publish yet</strong> — '+below.length+' criteria below 8/10:<div class="sr-criteria-list">'+below.map(function(c){var sc=data.criteria&&data.criteria[c.key]?Number(data.criteria[c.key].score)||0:0;return'<span class="sr-tag">'+esc(c.label)+' ('+sc.toFixed(1)+')</span>';}).join('')+'</div><div style="margin-top:6px;font-size:12px">Revise and re-evaluate until every criterion hits 8/10.</div></div></div>';
+  // Framework adherence cards
+  var fwAdhHtml='';
+  if(data.framework_adherence&&cwf&&data.framework_adherence.stages){
+    var stageCards=cwf.stages.map(function(s){var sd=data.framework_adherence.stages[s]||{score:0,note:''};var sc=Number(sd.score)||0;var cl=cls(sc);return'<div class="fw-adh-card '+cl+'"><div class="fw-adh-stage">'+esc(s)+'</div><div class="fw-adh-score '+cl+'">'+sc.toFixed(1)+'<span style="font-size:13px;color:#9ca3af;font-weight:400">/10</span></div><div class="fw-adh-note">'+esc(sd.note||'')+'</div></div>';}).join('');
+    var colCount=cwf.stages.length;
+    fwAdhHtml='<div class="section"><div class="sec-title">&#128214; Framework Adherence &mdash; <span class="fw-badge">'+esc(cwf.name)+' &nbsp;'+esc(cwf.full)+'</span></div><div style="display:grid;grid-template-columns:repeat('+colCount+',1fr);gap:10px">'+stageCards+'</div><div class="fw-adh-summary"><strong>Overall: '+esc(data.framework_adherence.overall||'')+'</strong> &mdash; '+esc(data.framework_adherence.summary||'')+'</div></div>';
+  }
+  // Priority fixes
+  var sorted=criteria.slice().sort(function(a,b){return(data.criteria&&data.criteria[a.key]?Number(data.criteria[a.key].score)||0:0)-(data.criteria&&data.criteria[b.key]?Number(data.criteria[b.key].score)||0:0);});
+  var priorityHtml='<div class="priority-list">'+sorted.slice(0,3).map(function(c,i){var cr=(data.criteria&&data.criteria[c.key])||{};var sc=Number(cr.score)||0;var rk=i===0?'':'p'+(i+1);var gap=8-sc;return'<div class="priority-card '+rk+'"><div class="priority-rank '+rk+'">'+(i+1)+'</div><div class="priority-body"><div class="priority-name">'+esc(c.label)+'</div><div class="priority-score">'+sc.toFixed(1)+'/10'+(gap>0?' — needs +'+gap.toFixed(1)+' to reach 8':' — passing')+'</div><div class="priority-fix">'+esc(cr.suggested_improvement||cr.needs_improvement||'No suggestion.')+'</div></div></div>';}).join('')+'</div>';
+  // Criteria cards
+  var critCards=criteria.map(function(c){var cr=(data.criteria&&data.criteria[c.key])||{};var sc=Number(cr.score)||0;var cl=cls(sc);return'<div class="crit-card '+cl+'"><div class="crit-head"><div class="crit-name">'+esc(c.label)+'</div><div class="crit-score '+cl+'">'+sc.toFixed(1)+'</div></div><div class="sbar"><div class="sbar-fill '+cl+'" style="width:0%" data-w="'+(sc*10)+'%"></div><div class="sbar-marker"></div></div><div class="crit-body">'+(cr.what_worked?'<div class="crit-row"><div class="crit-lbl">&#10003; What worked</div><div class="crit-txt">'+esc(cr.what_worked)+'</div></div>':'')+'<details><summary>&#9656; Improvement suggestions</summary><div>'+(cr.needs_improvement?'<div class="crit-row"><div class="crit-lbl">Needs improvement</div><div class="crit-txt">'+esc(cr.needs_improvement)+'</div></div>':'')+(cr.suggested_improvement?'<div class="crit-row"><div class="crit-lbl">&#128161; Suggestion</div><div class="crit-txt">'+esc(cr.suggested_improvement)+'</div></div>':'')+'</div></details></div></div>';}).join('');
+  // S/W/LP
+  var swHtml='<div class="grid3"><div class="info-card"><div class="info-lbl green">&#9733; Top 3 Strengths</div>'+(data.top_3_strengths||[]).map(function(s){return'<div class="li">'+esc(s)+'</div>';}).join('')+'</div><div class="info-card"><div class="info-lbl red">&#8593; Top 3 Weaknesses</div>'+(data.top_3_weaknesses||[]).map(function(s){return'<div class="li">'+esc(s)+'</div>';}).join('')+'</div><div class="info-card"><div class="info-lbl blue">&#128279; Ad-to-LP Alignment</div><div class="prose">'+esc(data.lp_alignment||'Not evaluated')+'</div></div></div>';
+  // Creative analysis
+  var visualHtml=data.creative_analysis&&data.creative_analysis!=='N/A'&&!data.creative_analysis.startsWith('N/A')
+    ?'<div style="margin-bottom:18px"><div class="visual-box"><div class="visual-lbl">&#128444;&#65039; Visual / Creative Analysis</div><div class="visual-prose">'+esc(data.creative_analysis)+'</div></div></div>':'';
+  // Video frames panel
+  var hasFrames=lastInputs.imageBlocks&&lastInputs.imageBlocks.length>1;
+  var framesHtml=hasFrames?'<div style="margin-bottom:18px"><div class="visual-box"><div class="visual-lbl">&#127916; Extracted Video Frames Analysed</div><div class="frame-grid">'+lastInputs.imageBlocks.map(function(b){return'<div class="frame-wrap"><img class="frame-thumb" src="data:image/jpeg;base64,'+b.b64+'" alt="'+esc(b.label)+'" /><div class="frame-label">'+esc(b.label)+'</div></div>';}).join('')+'</div></div></div>':'';
+  // Fixes
+  var fixesHtml='<div class="fix-list">'+(data.practical_fixes||[]).map(function(fix,i){return'<div class="fix-card"><div class="fix-row"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#1877f2;color:white;border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0;margin-right:8px">'+(i+1)+'</span><div style="flex:1"><div class="fix-lbl issue">Current Issue</div><div class="fix-txt">'+esc(fix.current_issue)+'</div></div></div><div style="padding-left:28px"><div class="fix-lbl better">Better Version</div><div class="fix-txt">'+esc(fix.better_version)+'</div></div></div>';}).join('')+'</div>';
+
+  var html='<div class="eval-banner"><div class="banner-top"><div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="format-badge '+fmtClass+'">'+fmtLabel+'</span>'+(cwf?'<span class="fw-badge">'+esc(cwf.name)+'</span>':'')+(lastInputs.objective?'<span class="obj-tag">'+esc(lastInputs.objective)+'</span>':'')+'</div><div class="score-display"><div class="score-big score-'+scoreClass+'">'+data.overall_score+'</div><div class="score-den">/'+data.max_score+'</div><div class="score-pct">('+pct+'%)</div></div><span class="rating-pill '+ratingCls+'">'+rating+'</span></div><div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:10px">'+cHtml+aHtml+'</div></div>'+sendHtml+'</div>'
+    +framesHtml+visualHtml+fwAdhHtml
+    +'<div class="section"><div class="sec-title">&#128680; Priority Fixes (3 Lowest Criteria)</div>'+priorityHtml+'</div>'
+    +'<div class="section"><div class="sec-title">&#128203; All Criteria Scores</div><div class="grid2">'+critCards+'</div></div>'
+    +'<div class="section">'+swHtml+'</div>'
+    +'<div class="section"><div class="sec-title">&#128161; Practical Fixes</div>'+fixesHtml+'</div>'
+    +'<div class="section no-print"><div class="sec-title">&#9997;&#65039; Rewritten Ad Version</div><div class="imp-wrap"><div id="genWrap" style="padding:14px"><button class="gen-btn" id="genBtn" onclick="generateRewrite()"><span id="genSpinEl" class="gen-spin"></span><span id="genLabel">&#10024; Generate Rewritten Ad'+(cwf?' using '+cwf.name:'')+'</span></button></div><div class="imp-body" id="impBody"></div></div></div>'
+    +'<div class="no-print" style="text-align:center"><button class="reset-btn" onclick="resetForm()">&#8592; Evaluate Another Ad</button></div>';
+
+  document.getElementById('resultsSection').innerHTML=html;document.getElementById('resultsSection').style.display='block';
+  requestAnimationFrame(function(){document.querySelectorAll('.sbar-fill').forEach(function(b){var w=b.dataset.w;requestAnimationFrame(function(){setTimeout(function(){b.style.width=w;},80);});});});
+}
+
+async function generateRewrite(){
+  var btn=document.getElementById('genBtn'),lbl=document.getElementById('genLabel'),spin=document.getElementById('genSpinEl');
+  btn.disabled=true;spin.style.display='inline-block';lbl.textContent='Generating rewritten ad...';
+  try{var raw=await callAI(buildRewritePrompt(lastInputs,lastData),null);document.getElementById('genWrap').style.display='none';var body=document.getElementById('impBody');body.innerHTML='<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px"><button class="copy-btn" onclick="copyRewrite(event)">&#128203; Copy</button></div><div class="imp-text" id="impText">'+esc(raw)+'</div>';body.classList.add('open');}
+  catch(err){btn.disabled=false;spin.style.display='none';lbl.innerHTML='&#10024; Generate Rewritten Ad (retry)';alert('Generation failed: '+err.message);}
+}
+function copyRewrite(e){var t=document.getElementById('impText').textContent;navigator.clipboard.writeText(t).then(function(){e.target.textContent='Copied!';setTimeout(function(){e.target.innerHTML='&#128203; Copy';},2000);});}
+function resetForm(){
+  document.getElementById('resultsSection').style.display='none';document.getElementById('resultsSection').innerHTML='';
+  document.getElementById('formSection').style.display='block';document.getElementById('formError').innerHTML='';
+  document.getElementById('noMediaNote').style.display='none';
+  ['s1','s2','s3','s4','s5'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('active','done');});
+  document.getElementById('loadSub').textContent='Scoring copy, framework adherence, visual quality, and MAS compliance';
+  clearUploadState();lastData=null;lastInputs=null;
+}
+</script>
+</body>
+</html>
